@@ -22,22 +22,17 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
 
           script: |
-            set -e
-
             cd /var/www/bhavi-cicd
 
-            echo "Pulling latest code..."
             git fetch origin main
             git reset --hard origin/main
 
-            echo "Installing dependencies..."
             npm install
 
-            echo "Building Strapi..."
             export NODE_OPTIONS="--max-old-space-size=2048"
+
             npm run build
 
-            echo "Restarting Strapi..."
             pm2 restart strapi || pm2 start npm --name strapi -- run develop
 
             pm2 save
