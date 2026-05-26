@@ -1,0 +1,41 @@
+name: Deploy Strapi
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+
+             cd /var/www/bhavi-cicd
+
+            echo "Pulling latest code..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "Installing dependencies..."
+            npm install
+
+            echo "Building Strapi..."
+            export NODE_OPTIONS="--max-old-space-size=2048"
+            npm run build
+
+            echo "Restarting Strapi..."
+            pm2 restart strapi || pm2 start "npm run start" --name strapi
+
+            pm2 save
